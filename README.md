@@ -8,12 +8,12 @@ SmartPhotoMetadata is a Python-based tool that enhances image metadata by:
 This tool is designed for photographers and archivists who want to enrich their image metadata effortlessly.
 
 ## Features
-✅ Extracts **location names** from filenames and converts them to GPS coordinates
-✅ Adds **EXIF GPS metadata** to images while preserving quality
-✅ Uses **OpenAI GPT** to generate artistic Japanese titles for images
-✅ Renames images based on AI-generated titles
-✅ Saves a **log CSV file** with original and new filenames
-✅ Simple **GUI** with folder selection and status updates
+-  Extracts **location names** from filenames and converts them to GPS coordinates
+-  Adds **EXIF GPS metadata** to images while preserving quality
+-  Uses **OpenAI GPT** to generate artistic Japanese titles for images
+-  Renames images based on AI-generated titles
+-  Saves a **log CSV file** with original and new filenames
+-  Simple **GUI** with folder selection and status updates
 
 ## Installation
 
