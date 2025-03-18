@@ -4,7 +4,7 @@ import base64
 import csv
 import threading
 import tkinter as tk
-from tkinter import filedialog, messagebox, simpledialog
+from tkinter import filedialog, messagebox
 from geopy.geocoders import Nominatim
 from PIL import Image, ImageFile
 import openai
@@ -17,16 +17,48 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 Image.MAX_IMAGE_PIXELS = None
 
 load_dotenv()
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_API_KEY = None
+if os.path.exists(".env"):
+    from dotenv import dotenv_values
+    env_vars = dotenv_values(".env")
+    OPENAI_API_KEY = env_vars.get("OPENAI_API_KEY")
+
+# GUI Setup
+root = ttk.Window(themename="darkly")
+root.title("SmartPhotoMetadata")
+root.geometry("500x260+0+0")
+
+def ask_api_key():
+    api_dialog = ttk.Toplevel(root)
+    api_dialog.title("API Key Required")
+    api_dialog.geometry("400x180")
+    api_dialog.resizable(False, False)
+
+    ttk.Label(api_dialog, text="Enter your OpenAI API Key:", bootstyle="info").pack(pady=10)
+
+    api_key_var = tk.StringVar()
+    api_entry = ttk.Entry(api_dialog, textvariable=api_key_var, show="*", width=40, bootstyle="dark")
+    api_entry.pack(pady=5)
+    api_entry.focus()
+
+    def submit_key():
+        global OPENAI_API_KEY
+        OPENAI_API_KEY = api_key_var.get().strip()
+        if OPENAI_API_KEY:
+            with open(".env", "a") as env_file:
+                env_file.write(f"\nOPENAI_API_KEY={OPENAI_API_KEY}\n")
+            api_dialog.destroy()
+        else:
+            messagebox.showerror("Error", "API key is required to proceed.")
+
+    ttk.Button(api_dialog, text="Submit", command=submit_key, bootstyle="success").pack(pady=15)
+
+    api_dialog.transient(root)
+    api_dialog.grab_set()
+    root.wait_window(api_dialog)
 
 if not OPENAI_API_KEY:
-    OPENAI_API_KEY = simpledialog.askstring("API Key Required", "Enter your OpenAI API key:", show='*')
-    if OPENAI_API_KEY:
-        with open(".env", "a") as env_file:
-            env_file.write(f"\nOPENAI_API_KEY={OPENAI_API_KEY}\n")
-    else:
-        messagebox.showerror("Error", "API key is required to proceed.")
-        exit()
+    ask_api_key()
 
 openai.api_key = OPENAI_API_KEY
 
@@ -51,7 +83,6 @@ def to_deg(value):
     return ((d, 1), (m, 1), (int(s * 100), 100))
 
 def set_gps_exif(image_path, lat, lon):
-    """Adds GPS metadata to the image while keeping its original quality."""
     update_status(f"Checking GPS data for {os.path.basename(image_path)}...")
     with Image.open(image_path) as img:
         exif_dict = piexif.load(img.info.get("exif", b"")) if "exif" in img.info else {"GPS": {}}
@@ -71,7 +102,6 @@ def set_gps_exif(image_path, lat, lon):
         img.save(image_path, "JPEG", exif=exif_bytes, quality=100)
 
 def encode_image(image_path):
-    """Creates a temporary resized version of the image for encoding, preserving the original image."""
     with Image.open(image_path) as img:
         img.thumbnail((512, 512))
         temp_path = image_path + "_temp.jpg"
@@ -131,17 +161,7 @@ def start_processing_thread():
     processing_thread = threading.Thread(target=process_images)
     processing_thread.start()
 
-# GUI Setup
-root = ttk.Window(themename="darkly")
-root.title("SmartPhotoMetadata")
-root.geometry("500x260+0+0")
-
-if getattr(sys, 'frozen', False):
-    icon_path = os.path.join(sys._MEIPASS, "icon.ico")
-    root.iconbitmap(icon_path)
-else:
-    root.iconphoto(False, tk.PhotoImage(file="logo.png"))
-
+# GUI Elements
 ttk.Label(root, text="Select a folder with JPG images:", bootstyle="info").pack(pady=10)
 folder_path = tk.StringVar(value=os.getenv("IMAGE_PATH", ""))
 

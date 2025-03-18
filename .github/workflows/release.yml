@@ -2,8 +2,8 @@ name: Release Build
 
 on:
   push:
-    tags:
-      - 'v*'  # Triggers when pushing a version tag like v1.0.0
+    paths:
+      - "run.py"
 
 jobs:
   build:
@@ -11,7 +11,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest]  # Build for both Windows and Linux
+        os: [windows-latest, ubuntu-latest]
 
     steps:
     - name: Checkout Repository
@@ -20,7 +20,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'  # Adjust Python version as needed
+        python-version: '3.11'
 
     - name: Install Dependencies
       run: |
@@ -30,7 +30,7 @@ jobs:
     - name: Compile Windows Executable
       if: runner.os == 'Windows'
       run: |
-        pyinstaller --onefile --windowed --icon=icon.ico --add-data "logo.png;." --name SmartPhotoMetadata run.py
+        pyinstaller --onefile --windowed --icon=icon.ico --name SmartPhotoMetadata run.py
 
     - name: Compile Linux Executable
       if: runner.os == 'Linux'
@@ -65,7 +65,7 @@ jobs:
         path: SmartPhotoMetadata-Linux.tar.gz
 
   release:
-    needs: build  # Run after the build job finishes
+    needs: build
     runs-on: ubuntu-latest
 
     steps:
