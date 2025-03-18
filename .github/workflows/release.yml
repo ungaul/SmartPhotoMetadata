@@ -1,0 +1,104 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'  # Triggers when pushing a version tag like v1.0.0
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]  # Build for both Windows and Linux
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'  # Adjust Python version as needed
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller geopy pillow openai piexif ttkbootstrap python-dotenv
+
+    - name: Compile Windows Executable
+      if: runner.os == 'Windows'
+      run: |
+        pyinstaller --onefile --windowed --icon=icon.ico --add-data "logo.png;." --name SmartPhotoMetadata run.py
+
+    - name: Compile Linux Executable
+      if: runner.os == 'Linux'
+      run: |
+        pyinstaller --onefile --name SmartPhotoMetadata run.py
+
+    - name: Archive Windows Executable
+      if: runner.os == 'Windows'
+      run: |
+        mkdir release
+        mv dist/SmartPhotoMetadata.exe release/
+        tar -cvzf SmartPhotoMetadata-Windows.tar.gz -C release SmartPhotoMetadata.exe
+
+    - name: Archive Linux Executable
+      if: runner.os == 'Linux'
+      run: |
+        chmod +x dist/SmartPhotoMetadata
+        tar -cvzf SmartPhotoMetadata-Linux.tar.gz -C dist SmartPhotoMetadata
+
+    - name: Upload Windows Artifact
+      if: runner.os == 'Windows'
+      uses: actions/upload-artifact@v4
+      with:
+        name: SmartPhotoMetadata-Windows
+        path: SmartPhotoMetadata-Windows.tar.gz
+
+    - name: Upload Linux Artifact
+      if: runner.os == 'Linux'
+      uses: actions/upload-artifact@v4
+      with:
+        name: SmartPhotoMetadata-Linux
+        path: SmartPhotoMetadata-Linux.tar.gz
+
+  release:
+    needs: build  # Run after the build job finishes
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Download Windows Artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: SmartPhotoMetadata-Windows
+        path: .
+
+    - name: Download Linux Artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: SmartPhotoMetadata-Linux
+        path: .
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        tag_name: ${{ github.ref_name }}
+        name: Release ${{ github.ref_name }}
+        draft: false
+        prerelease: false
+        files: |
+          SmartPhotoMetadata-Windows.tar.gz
+          SmartPhotoMetadata-Linux.tar.gz
+        body: |
+          ### 🚀 New Release: ${{ github.ref_name }}
+
+          **SmartPhotoMetadata Changelog**
+
+          - Automatically built and released using GitHub Actions.
+          - Supports Windows (`.exe`) and Linux (`.tar.gz`).
