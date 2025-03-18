@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "run.py"
+  workflow_dispatch:
 
 jobs:
   build:
@@ -87,7 +88,7 @@ jobs:
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.GH_PAT }}
         tag_name: ${{ github.ref_name }}
         name: Release ${{ github.ref_name }}
         draft: false
