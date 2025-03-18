@@ -12,7 +12,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest]
+        os: [windows-latest]
 
     steps:
     - name: Checkout Repository
@@ -29,28 +29,14 @@ jobs:
         pip install pyinstaller geopy pillow openai piexif ttkbootstrap python-dotenv
 
     - name: Compile Windows Executable
-      if: runner.os == 'Windows'
       run: |
         pyinstaller --onefile --windowed --icon=icon.ico --name SmartPhotoMetadata run.py
 
-    - name: Compile Linux Executable
-      if: runner.os == 'Linux'
-      run: |
-        pyinstaller --onefile --name SmartPhotoMetadata run.py
-
     - name: Upload Windows Executable
-      if: runner.os == 'Windows'
       uses: actions/upload-artifact@v4
       with:
         name: SmartPhotoMetadata-Windows
         path: dist/SmartPhotoMetadata.exe
-
-    - name: Upload Linux Executable
-      if: runner.os == 'Linux'
-      uses: actions/upload-artifact@v4
-      with:
-        name: SmartPhotoMetadata-Linux
-        path: dist/SmartPhotoMetadata
 
   release:
     needs: build
@@ -66,16 +52,6 @@ jobs:
         name: SmartPhotoMetadata-Windows
         path: .
 
-    - name: Download Linux Executable
-      uses: actions/download-artifact@v4
-      with:
-        name: SmartPhotoMetadata-Linux
-        path: .
-
-    - name: Verify Files Exist
-      run: |
-        ls -l
-
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
@@ -86,11 +62,10 @@ jobs:
         prerelease: false
         files: |
           SmartPhotoMetadata.exe
-          SmartPhotoMetadata
         body: |
           ### 🚀 New Release: ${{ github.ref_name }}
 
           **SmartPhotoMetadata Changelog**
 
           - Automatically built and released using GitHub Actions.
-          - Supports Windows (`.exe`) and Linux (`.tar.gz`).
+          - Supports Windows (`.exe`).
