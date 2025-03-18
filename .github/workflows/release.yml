@@ -38,31 +38,19 @@ jobs:
       run: |
         pyinstaller --onefile --name SmartPhotoMetadata run.py
 
-    - name: Archive Windows Executable
-      if: runner.os == 'Windows'
-      run: |
-        mkdir release
-        mv dist/SmartPhotoMetadata.exe release/
-
-    - name: Archive Linux Executable
-      if: runner.os == 'Linux'
-      run: |
-        chmod +x dist/SmartPhotoMetadata
-        tar -cvzf SmartPhotoMetadata-Linux.tar.gz -C dist SmartPhotoMetadata
-
-    - name: Upload Windows Artifact
+    - name: Upload Windows Executable
       if: runner.os == 'Windows'
       uses: actions/upload-artifact@v4
       with:
         name: SmartPhotoMetadata-Windows
-        path: SmartPhotoMetadata-Windows.zip
+        path: dist/SmartPhotoMetadata.exe
 
-    - name: Upload Linux Artifact
+    - name: Upload Linux Executable
       if: runner.os == 'Linux'
       uses: actions/upload-artifact@v4
       with:
         name: SmartPhotoMetadata-Linux
-        path: SmartPhotoMetadata-Linux.tar.gz
+        path: dist/SmartPhotoMetadata
 
   release:
     needs: build
@@ -72,13 +60,13 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v4
 
-    - name: Download Windows Artifact
+    - name: Download Windows Executable
       uses: actions/download-artifact@v4
       with:
         name: SmartPhotoMetadata-Windows
         path: .
 
-    - name: Download Linux Artifact
+    - name: Download Linux Executable
       uses: actions/download-artifact@v4
       with:
         name: SmartPhotoMetadata-Linux
@@ -93,12 +81,12 @@ jobs:
         draft: false
         prerelease: false
         files: |
-          SmartPhotoMetadata-Windows.zip
-          SmartPhotoMetadata-Linux.tar.gz
+          SmartPhotoMetadata-Windows/SmartPhotoMetadata.exe
+          SmartPhotoMetadata-Linux/SmartPhotoMetadata
         body: |
           ### 🚀 New Release: ${{ github.ref_name }}
 
           **SmartPhotoMetadata Changelog**
 
           - Automatically built and released using GitHub Actions.
-          - Supports Windows (`.zip`) and Linux (`.tar.gz`).
+          - Supports Windows (`.exe`) and Linux (`.tar.gz`).
