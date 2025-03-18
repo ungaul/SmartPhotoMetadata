@@ -43,7 +43,7 @@ jobs:
       run: |
         mkdir release
         mv dist/SmartPhotoMetadata.exe release/
-        tar -cvzf SmartPhotoMetadata-Windows.tar.gz -C release SmartPhotoMetadata.exe
+        powershell Compress-Archive -Path release/SmartPhotoMetadata.exe -DestinationPath SmartPhotoMetadata-Windows.zip
 
     - name: Archive Linux Executable
       if: runner.os == 'Linux'
@@ -56,7 +56,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: SmartPhotoMetadata-Windows
-        path: SmartPhotoMetadata-Windows.tar.gz
+        path: SmartPhotoMetadata-Windows.zip
 
     - name: Upload Linux Artifact
       if: runner.os == 'Linux'
@@ -94,7 +94,7 @@ jobs:
         draft: false
         prerelease: false
         files: |
-          SmartPhotoMetadata-Windows.tar.gz
+          SmartPhotoMetadata-Windows.zip
           SmartPhotoMetadata-Linux.tar.gz
         body: |
           ### 🚀 New Release: ${{ github.ref_name }}
@@ -102,4 +102,4 @@ jobs:
           **SmartPhotoMetadata Changelog**
 
           - Automatically built and released using GitHub Actions.
-          - Supports Windows (`.exe`) and Linux (`.tar.gz`).
+          - Supports Windows (`.zip`) and Linux (`.tar.gz`).
