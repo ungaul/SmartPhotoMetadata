@@ -2,8 +2,8 @@ name: Release Build
 
 on:
   push:
-    paths:
-      - "run.py"
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
