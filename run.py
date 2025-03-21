@@ -133,12 +133,31 @@ def process_images():
     update_status("Processing images...")
     csv_path = os.path.join(folder_path.get(), "log.csv")
 
-    with open(csv_path, mode="w", newline="", encoding="utf-8-sig") as csv_file:
+    processed_titles = set()
+    if os.path.exists(csv_path):
+        try:
+            with open(csv_path, mode="r", newline="", encoding="utf-8-sig") as csv_file:
+                csv_reader = csv.reader(csv_file, delimiter=',', quoting=csv.QUOTE_MINIMAL)
+                header = next(csv_reader, None)
+                for row in csv_reader:
+                    if len(row) >= 2:
+                        processed_titles.add(row[1].strip())
+        except Exception as e:
+            update_status(f"Error reading CSV: {e}")
+
+    file_mode = "a" if os.path.exists(csv_path) else "w"
+    with open(csv_path, mode=file_mode, newline="", encoding="utf-8-sig") as csv_file:
         csv_writer = csv.writer(csv_file, delimiter=',', quoting=csv.QUOTE_MINIMAL)
-        csv_writer.writerow(["Original Filename", "New Title"])
+        if file_mode == "w":
+            csv_writer.writerow(["Original Filename", "New Title"])
 
         for file in os.listdir(folder_path.get()):
             if file.lower().endswith(".jpg"):
+                base_name = os.path.splitext(file)[0]
+                if base_name in processed_titles:
+                    update_status(f"Skipping already processed file: {file}")
+                    continue
+
                 image_path = os.path.join(folder_path.get(), file)
 
                 location = extract_location_from_filename(file)
