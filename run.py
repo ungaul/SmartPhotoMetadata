@@ -23,7 +23,6 @@ if os.path.exists(".env"):
     env_vars = dotenv_values(".env")
     OPENAI_API_KEY = env_vars.get("OPENAI_API_KEY")
 
-# GUI Setup
 root = ttk.Window(themename="darkly")
 root.title("SmartPhotoMetadata")
 root.geometry("500x260+0+0")
@@ -152,6 +151,12 @@ def process_images():
                 if title:
                     safe_title = re.sub(r'[\\/:*?"<>|]', '', title)
                     new_filename = os.path.join(folder_path.get(), safe_title.replace(" ", "_") + ".jpg")
+                    if os.path.exists(new_filename):
+                        base, ext = os.path.splitext(new_filename)
+                        counter = 1
+                        while os.path.exists(f"{base}_{counter}{ext}"):
+                            counter += 1
+                        new_filename = f"{base}_{counter}{ext}"
                     os.rename(image_path, new_filename)
                     csv_writer.writerow([file, safe_title])
                     update_status(f"Processed: {file} → {safe_title}")
@@ -161,7 +166,6 @@ def start_processing_thread():
     processing_thread = threading.Thread(target=process_images)
     processing_thread.start()
 
-# GUI Elements
 ttk.Label(root, text="Select a folder with JPG images:", bootstyle="info").pack(pady=10)
 folder_path = tk.StringVar(value=os.getenv("IMAGE_PATH", ""))
 
