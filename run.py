@@ -176,7 +176,20 @@ def process_images():
                         while os.path.exists(f"{base}_{counter}{ext}"):
                             counter += 1
                         new_filename = f"{base}_{counter}{ext}"
-                    os.rename(image_path, new_filename)
+                    original_base_name = os.path.splitext(file)[0]
+                    new_base_name = os.path.splitext(os.path.basename(new_filename))[0]
+                    for sibling_file in os.listdir(folder_path.get()):
+                        sibling_base, sibling_ext = os.path.splitext(sibling_file)
+                        if sibling_base == original_base_name:
+                            old_path = os.path.join(folder_path.get(), sibling_file)
+                            new_path = os.path.join(folder_path.get(), new_base_name + sibling_ext)
+                            counter = 1
+                            while os.path.exists(new_path):
+                                new_path = os.path.join(folder_path.get(), f"{new_base_name}_{counter}{sibling_ext}")
+                                counter += 1
+
+                            os.rename(old_path, new_path)
+
                     csv_writer.writerow([file, safe_title])
                     update_status(f"Processed: {file} → {safe_title}")
     update_status("Processing complete! Done.")
