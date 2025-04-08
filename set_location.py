@@ -152,7 +152,7 @@ ttk.Entry(coord_frame, textvariable=lon_var, width=20).grid(row=0, column=3, pad
 
 button_frame = ttk.Frame(root)
 button_frame.pack(pady=5)
-ttk.Button(button_frame, text="Skip / Save", command=save_and_next, bootstyle="success").grid(row=0, column=0, padx=10)
+ttk.Button(button_frame, text="Next", command=save_and_next, bootstyle="success").grid(row=0, column=0, padx=10)
 ttk.Button(button_frame, text="Open Maps", command=open_map_in_browser, bootstyle="info").grid(row=0, column=1, padx=10)
 
 status_label = ttk.Label(root, text="")
