@@ -28,7 +28,6 @@ lat_var = tk.StringVar()
 lon_var = tk.StringVar()
 status_label = None
 
-
 def select_folder():
     global image_list, current_index
     folder_selected = filedialog.askdirectory()
@@ -40,7 +39,6 @@ def select_folder():
     else:
         messagebox.showinfo("Info", "No JPG images found in this folder.")
 
-
 def load_gps_data(image_path):
     try:
         img = Image.open(image_path)
@@ -48,7 +46,6 @@ def load_gps_data(image_path):
         gps = exif_dict.get("GPS", {})
         def conv(tag):
             return gps.get(tag, None)
-
         if conv(piexif.GPSIFD.GPSLatitude) and conv(piexif.GPSIFD.GPSLongitude):
             lat_ref = gps[piexif.GPSIFD.GPSLatitudeRef].decode()
             lon_ref = gps[piexif.GPSIFD.GPSLongitudeRef].decode()
@@ -62,19 +59,17 @@ def load_gps_data(image_path):
         pass
     return None, None
 
-
 def dms_to_deg(dms):
     d, m, s = dms
     return d[0]/d[1] + m[0]/m[1]/60 + s[0]/s[1]/3600
-
 
 def deg_to_dms(deg):
     d = int(deg)
     m_float = abs((deg - d) * 60)
     m = int(m_float)
+    # On arrondit la seconde en gardant une précision sur 6 décimales
     s = round((m_float - m) * 60, 6)
-    return ((d,1), (m,1), (int(s*1000000),1000000))
-
+    return ((d, 1), (m, 1), (int(s * 1000000), 1000000))
 
 def open_map_in_browser():
     try:
@@ -84,7 +79,6 @@ def open_map_in_browser():
         webbrowser.open(url)
     except ValueError:
         messagebox.showerror("Invalid Input", "Latitude and Longitude must be valid numbers.")
-
 
 def save_and_next():
     global current_index
@@ -100,23 +94,29 @@ def save_and_next():
         messagebox.showerror("Invalid Input", "Latitude and Longitude must be valid numbers.")
         return
 
+    # On ouvre l'image pour récupérer l'EXIF existant (ou créer un dictionnaire minimal si inexistant)
     img = Image.open(image_path)
-    exif_dict = piexif.load(img.info.get("exif", b"")) if "exif" in img.info else {"GPS": {}}
+    exif_dict = piexif.load(img.info.get("exif", b"")) if "exif" in img.info else {"0th":{}, "Exif":{}, "GPS":{}, "1st":{}}
 
+    # Mettre à jour les tags GPS avec les nouvelles valeurs.
     exif_dict['GPS'][piexif.GPSIFD.GPSLatitude] = deg_to_dms(abs(lat))
     exif_dict['GPS'][piexif.GPSIFD.GPSLongitude] = deg_to_dms(abs(lon))
-    exif_dict['GPS'][piexif.GPSIFD.GPSLatitudeRef] = 'N' if lat >= 0 else 'S'
-    exif_dict['GPS'][piexif.GPSIFD.GPSLongitudeRef] = 'E' if lon >= 0 else 'W'
+    exif_dict['GPS'][piexif.GPSIFD.GPSLatitudeRef] = b'N' if lat >= 0 else b'S'
+    exif_dict['GPS'][piexif.GPSIFD.GPSLongitudeRef] = b'E' if lon >= 0 else b'W'
 
     exif_bytes = piexif.dump(exif_dict)
-    img.save(image_path, "jpeg", exif=exif_bytes)
+    try:
+        # Insertion directe du segment EXIF dans le fichier sans réencodage de l'image.
+        piexif.insert(exif_bytes, image_path)
+    except Exception as e:
+        messagebox.showerror("EXIF Error", f"Failed to insert EXIF data: {e}")
+        return
 
     if current_index + 1 < len(image_list):
         current_index += 1
         load_image()
     else:
         messagebox.showinfo("Done", "You have reached the end of the folder.")
-
 
 def load_image():
     if not image_list:
@@ -134,7 +134,6 @@ def load_image():
     lat_var.set(str(lat) if lat else "")
     lon_var.set(str(lon) if lon else "")
     status_label.config(text=f"{file} ({current_index+1}/{len(image_list)})")
-
 
 # UI Layout
 ttk.Label(root, text="Select a folder with JPG images:", bootstyle="info").pack(pady=10)
